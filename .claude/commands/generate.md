@@ -1,13 +1,25 @@
 ---
 description: Generate new Review Drill problems with answer keys
-argument-hint: "<python|sql|typescript|javascript|any> <easy|medium|hard> [count] [function|diff|multi] [weak]"
+argument-hint: "<python|sql|typescript|javascript|any> <easy|medium|hard> [count] [function|diff|multi] [weak] [real=N]"
 ---
 
 Create new practice problems for Review Drill. Arguments: `$ARGUMENTS`
-(language, difficulty, optional count (default 3), optional format, optional `weak` to target weak spots).
+(language, difficulty, optional count (default 3), optional format, optional `weak` to target weak spots,
+optional `real=N` to make N of the count real problems).
 
 If `weak` is given, run `uv run python -m app.cli stats` first and bias issue categories and
 languages toward the highest miss rates.
+
+## Real problems (`real=N`)
+
+`real=N` is part of the total: `/generate python medium 5 real=2` makes 3 generated and 2 real problems.
+N larger than the count is capped at the count.
+
+For the real ones, follow `.claude/commands/import-real.md` (sources, license check, trimming, key from the
+fix commit, `source.kind: "real"`), using this command's language. Match the requested difficulty as closely
+as the available bugs allow; set `difficulty` to what the bug actually is rather than forcing it.
+If fewer than N usable real bugs turn up (common for SQL), make up the difference with generated problems
+and say how many real ones were found.
 
 ## What a good problem looks like
 
@@ -44,4 +56,4 @@ Run `uv run python -m app.cli validate data/problems/<id>.json data/keys/<id>.js
 ## Reporting
 
 Do not reveal the bugs in the terminal. That would spoil the practice. Reply only with the list of new
-problem ids, language, format and difficulty.
+problem ids, language, format, difficulty, and whether each is generated or real.

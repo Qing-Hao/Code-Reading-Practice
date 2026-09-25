@@ -58,7 +58,8 @@ Confidence is not scored. It feeds calibration stats: how often your verdict is 
 
 - **Generated**: written by `/generate`, about 20% clean and 10% nits-only, with spec mismatches as a
   first-class issue type.
-- **Real**: from bug-fix commits (BugsInPy, CVEfixes, GitHub). The code is taken from the buggy commit and
+- **Real**: from bug-fix commits (BugsInPy, CVEfixes, GitHub), via `/import-real` or `/generate ... real=N`
+  for a mixed batch. The code is taken from the buggy commit and
   the key from the fix. `source` records repo, fix commit URL, buggy sha, dataset, license and date.
 - The source badge is hidden until you submit by default, because real bug-fix problems always contain a
   bug. The header setting can show it always.

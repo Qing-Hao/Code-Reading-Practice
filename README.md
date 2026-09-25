@@ -27,7 +27,7 @@ Open http://localhost:8765 and keep a Claude Code session open in this folder.
 | Command | What it does |
 | --- | --- |
 | `/grade [attempt_id]` | Grade ungraded attempts (or one) and push feedback to the UI |
-| `/generate <lang> <difficulty> [count] [format] [weak]` | Create new problems; `weak` targets your worst miss rates |
+| `/generate <lang> <difficulty> [count] [format] [weak] [real=N]` | Create new problems; `weak` targets your worst miss rates; `real=N` makes N of them real bugs |
 | `/import-real [count] [lang] [source]` | Turn real bug-fix commits (BugsInPy, CVEfixes, GitHub) into problems |
 | `/recap [attempt_id]` | Save a summary of the terminal discussion to the attempt |
 | `/dispute [attempt_id] <reason>` | Re-examine the answer key and revise it if it is wrong |
