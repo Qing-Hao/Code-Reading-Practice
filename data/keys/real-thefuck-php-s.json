@@ -1,0 +1,28 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "thefuck/rules/php_s.py",
+      "start": 6,
+      "end": 6,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Only matches when -s follows php directly",
+      "explanation": "@for_app already checks the program is php. Matching the literal 'php -s' misses commands like `php -t public -s 0.0.0.0:8080`.",
+      "fix": "return \" -s \" in command.script"
+    },
+    {
+      "id": "k2",
+      "file": "thefuck/rules/php_s.py",
+      "start": 13,
+      "end": 13,
+      "category": "correctness",
+      "severity": "low",
+      "title": "requires_output = False is wrong here",
+      "explanation": "Per the maintainer, php -s can produce output when used this way, so the rule should not declare it runs without output. The fix removed this line.",
+      "fix": "Delete requires_output = False."
+    }
+  ],
+  "problem_id": "real-thefuck-php-s"
+}

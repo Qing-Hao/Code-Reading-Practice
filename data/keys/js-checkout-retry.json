@@ -1,0 +1,50 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "lib/payments.js",
+      "start": 9,
+      "end": 13,
+      "category": "correctness",
+      "severity": "critical",
+      "title": "Retry can double-charge",
+      "explanation": "A timeout does not mean the charge failed. Retrying charges.create without an idempotency key can charge the card again.",
+      "fix": "Pass idempotencyKey derived from the cart (e.g. `checkout-${cartId}`) on every attempt."
+    },
+    {
+      "id": "k2",
+      "file": "lib/payments.js",
+      "start": 14,
+      "end": 15,
+      "category": "spec",
+      "severity": "high",
+      "title": "Declines are retried",
+      "explanation": "The catch retries every error, including card declines, which PAY-51 says must fail immediately. There is also no delay between attempts.",
+      "fix": "Retry only on timeout/network errors; rethrow declines at once; add a short backoff."
+    },
+    {
+      "id": "k3",
+      "file": "api/checkout.js",
+      "start": 10,
+      "end": 12,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Double submit or failed insert",
+      "explanation": "Two concurrent checkouts for the same cart both charge. If orders.insert fails after the charge, the customer pays with no order.",
+      "fix": "Lock or mark the cart as checking out first; record a pending order before charging and reconcile on failure."
+    },
+    {
+      "id": "k4",
+      "file": "api/checkout.js",
+      "start": 9,
+      "end": 9,
+      "category": "correctness",
+      "severity": "low",
+      "title": "Money summed as floats",
+      "explanation": "Summing decimal dollars in floating point can drift by a cent before Math.round.",
+      "fix": "Keep prices in integer cents end to end."
+    }
+  ],
+  "problem_id": "js-checkout-retry"
+}

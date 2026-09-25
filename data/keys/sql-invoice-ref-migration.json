@@ -1,0 +1,28 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "migrations/0042_add_invoice_ref.sql",
+      "start": 3,
+      "end": 4,
+      "category": "performance",
+      "severity": "high",
+      "title": "Single 40M-row UPDATE",
+      "explanation": "One UPDATE over 40M rows rewrites every row inside one long transaction: row locks, table bloat and replication lag while the app is live.",
+      "fix": "Ship the column now; backfill in batches (e.g. 10k rows per statement) from a separate job."
+    },
+    {
+      "id": "k2",
+      "file": "migrations/0042_add_invoice_ref.sql",
+      "start": 6,
+      "end": 6,
+      "category": "performance",
+      "severity": "high",
+      "title": "Index build blocks writes",
+      "explanation": "Plain CREATE INDEX holds a lock that blocks inserts and updates on invoices until the build finishes.",
+      "fix": "CREATE INDEX CONCURRENTLY, in its own migration outside a transaction."
+    }
+  ],
+  "problem_id": "sql-invoice-ref-migration"
+}

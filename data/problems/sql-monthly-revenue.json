@@ -1,0 +1,23 @@
+{
+  "id": "sql-monthly-revenue",
+  "title": "monthly_revenue.sql",
+  "language": "sql",
+  "format": "function",
+  "difficulty": "medium",
+  "spec": {
+    "id": "FIN-7",
+    "text": "Revenue per calendar month for the last 12 full months, net of refunds. Partial refunds exist and must be subtracted. Months are in Asia/Singapore time."
+  },
+  "context": "PostgreSQL 16. orders.created_at is timestamptz. refunds(order_id, amount) can have several rows per order.",
+  "files": [
+    {
+      "path": "reports/monthly_revenue.sql",
+      "content": "-- Monthly revenue for the finance dashboard.\nSELECT date_trunc('month', o.created_at) AS month,\n       SUM(o.total)                      AS revenue,\n       COUNT(*)                          AS orders\nFROM orders o\nLEFT JOIN refunds r ON r.order_id = o.id\nWHERE o.created_at >= now() - interval '12 months'\n  AND r.id IS NULL\nGROUP BY 1\nORDER BY 1;\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

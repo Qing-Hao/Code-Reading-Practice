@@ -1,0 +1,39 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/auth/session.ts",
+      "start": 6,
+      "end": 9,
+      "category": "security",
+      "severity": "critical",
+      "title": "Expired session is refreshed anyway",
+      "explanation": "After deleting an expired session the code falls through, extends it and saves it again. That violates AUTH-88 and keeps expired sessions alive.",
+      "fix": "Return null inside the expiry branch after deleting."
+    },
+    {
+      "id": "k2",
+      "file": "src/auth/session.ts",
+      "start": 2,
+      "end": 5,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Null check removed",
+      "explanation": "The diff drops the !session check. An unknown token now throws a TypeError on session.expiresAt, hidden only by the catch.",
+      "fix": "Keep `if (!session) return null;` after the get."
+    },
+    {
+      "id": "k3",
+      "file": "src/auth/session.ts",
+      "start": 12,
+      "end": 13,
+      "category": "design",
+      "severity": "medium",
+      "title": "catch swallows every error",
+      "explanation": "A Redis outage now looks like 'not signed in' and silently logs every user out, with nothing logged.",
+      "fix": "Catch only expected errors; log and rethrow store failures."
+    }
+  ],
+  "problem_id": "ts-refresh-session"
+}

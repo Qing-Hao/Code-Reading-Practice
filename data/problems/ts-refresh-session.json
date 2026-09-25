@@ -1,0 +1,24 @@
+{
+  "id": "ts-refresh-session",
+  "title": "refreshSession",
+  "language": "typescript",
+  "format": "diff",
+  "difficulty": "medium",
+  "spec": {
+    "id": "AUTH-88",
+    "text": "Refreshing extends an active session by SESSION_TTL_MS. Expired sessions must not be refreshed; the user signs in again."
+  },
+  "context": "Called on every authenticated request. store is a Redis-backed key-value store; store.get resolves to undefined for unknown tokens.",
+  "files": [
+    {
+      "path": "src/auth/session.ts",
+      "is_diff": true,
+      "content": " export async function refreshSession(token: string): Promise<Session | null> {\n-  const session = await store.get(token);\n-  if (!session) return null;\n+  try {\n+    const session = await store.get(token);\n+    if (session.expiresAt < Date.now()) {\n+      await store.delete(token);\n+    }\n+    session.expiresAt = Date.now() + SESSION_TTL_MS;\n+    await store.set(token, session);\n+    return session;\n+  } catch (e) {\n+    return null;\n+  }\n }\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

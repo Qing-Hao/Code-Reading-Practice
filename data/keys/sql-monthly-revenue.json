@@ -1,0 +1,39 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "reports/monthly_revenue.sql",
+      "start": 6,
+      "end": 8,
+      "category": "spec",
+      "severity": "high",
+      "title": "Partial refunds drop the whole order",
+      "explanation": "r.id IS NULL removes any order with any refund, so a $5 refund on a $500 order loses $500 of revenue. Spec says subtract refunds.",
+      "fix": "Subtract refunded amounts: aggregate refunds per order in a subquery and use o.total - COALESCE(refunded, 0)."
+    },
+    {
+      "id": "k2",
+      "file": "reports/monthly_revenue.sql",
+      "start": 2,
+      "end": 2,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Months bucketed in UTC",
+      "explanation": "date_trunc on a timestamptz uses the session time zone, not Asia/Singapore, so orders near midnight land in the wrong month.",
+      "fix": "date_trunc('month', o.created_at AT TIME ZONE 'Asia/Singapore')"
+    },
+    {
+      "id": "k3",
+      "file": "reports/monthly_revenue.sql",
+      "start": 7,
+      "end": 7,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Not 12 full months",
+      "explanation": "now() - 12 months includes the current partial month and part of the month 12 months ago.",
+      "fix": "Bound by date_trunc('month', now() AT TIME ZONE 'Asia/Singapore') minus 12 months, exclusive of the current month."
+    }
+  ],
+  "problem_id": "sql-monthly-revenue"
+}

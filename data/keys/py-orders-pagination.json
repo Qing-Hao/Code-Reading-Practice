@@ -1,0 +1,39 @@
+{
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "orders/queries.py",
+      "start": 3,
+      "end": 3,
+      "category": "spec",
+      "severity": "high",
+      "title": "Page 1 skips the first 20 orders",
+      "explanation": "The spec says pages start at 1, but offset = page * page_size makes page 1 start at row 20.",
+      "fix": "offset = (page - 1) * page_size"
+    },
+    {
+      "id": "k2",
+      "file": "orders/queries.py",
+      "start": 4,
+      "end": 4,
+      "category": "security",
+      "severity": "critical",
+      "title": "SQL injection",
+      "explanation": "user_id comes from the URL and is interpolated straight into the SQL string.",
+      "fix": "Use placeholders: WHERE user_id = ? ... LIMIT ? OFFSET ? with (user_id, page_size, offset)."
+    },
+    {
+      "id": "k3",
+      "file": "orders/queries.py",
+      "start": 7,
+      "end": 10,
+      "category": "performance",
+      "severity": "medium",
+      "title": "N+1 query",
+      "explanation": "One order_items query runs per order, so a page costs 21 queries.",
+      "fix": "Fetch items for all order ids in one query (WHERE order_id IN (...)) or JOIN."
+    }
+  ],
+  "problem_id": "py-orders-pagination"
+}

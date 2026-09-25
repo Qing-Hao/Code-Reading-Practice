@@ -1,0 +1,23 @@
+{
+  "id": "py-orders-pagination",
+  "title": "get_user_orders",
+  "language": "python",
+  "format": "function",
+  "difficulty": "medium",
+  "spec": {
+    "id": "ORD-212",
+    "text": "Account page lists a user's orders, 20 per page, newest first. Page numbers start at 1."
+  },
+  "context": "Called from GET /api/users/{id}/orders?page=N. db is a sqlite3 connection.",
+  "files": [
+    {
+      "path": "orders/queries.py",
+      "content": "def get_user_orders(db, user_id: str, page: int = 1, page_size: int = 20):\n    \"\"\"Return one page of a user's orders, newest first.\"\"\"\n    offset = page * page_size\n    query = f\"SELECT id, total, created_at FROM orders WHERE user_id = '{user_id}' ORDER BY created_at DESC LIMIT {page_size} OFFSET {offset}\"\n    rows = db.execute(query).fetchall()\n    orders = []\n    for row in rows:\n        items = db.execute(\n            \"SELECT sku, qty FROM order_items WHERE order_id = ?\", (row[0],)\n        ).fetchall()\n        orders.append({\n            \"id\": row[0],\n            \"total\": row[1],\n            \"created_at\": row[2],\n            \"items\": [{\"sku\": i[0], \"qty\": i[1]} for i in items],\n        })\n    return orders\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

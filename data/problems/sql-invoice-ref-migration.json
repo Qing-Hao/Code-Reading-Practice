@@ -1,0 +1,24 @@
+{
+  "id": "sql-invoice-ref-migration",
+  "title": "0042_add_invoice_ref.sql",
+  "language": "sql",
+  "format": "diff",
+  "difficulty": "hard",
+  "spec": {
+    "id": "BILL-40",
+    "text": "Support looking up invoices by customer reference. invoices has about 40M rows in production (PostgreSQL 16). Migrations run while the app is live."
+  },
+  "context": "New migration file. The deploy pipeline runs each migration inside one transaction.",
+  "files": [
+    {
+      "path": "migrations/0042_add_invoice_ref.sql",
+      "is_diff": true,
+      "content": "+ALTER TABLE invoices ADD COLUMN customer_ref VARCHAR(64);\n+\n+UPDATE invoices\n+   SET customer_ref = (SELECT ref FROM customers WHERE customers.id = invoices.customer_id);\n+\n+CREATE INDEX idx_invoices_customer_ref ON invoices (customer_ref);\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "py-retry-backoff",
+  "title": "retry_with_backoff",
+  "language": "python",
+  "format": "function",
+  "difficulty": "medium",
+  "spec": {
+    "id": "INFRA-19",
+    "text": "Wrap flaky calls to the payment gateway. Retry only on connection errors and timeouts, at most 5 attempts in total, backoff capped at 8s with jitter. Re-raise the last error when attempts run out."
+  },
+  "context": "Used around idempotent GET calls to the gateway's status endpoint.",
+  "files": [
+    {
+      "path": "infra/retry.py",
+      "content": "import random\nimport time\n\n\ndef retry_with_backoff(fn, attempts: int = 5, base_delay: float = 0.5, max_delay: float = 8.0,\n                       retry_on: tuple[type[Exception], ...] = (ConnectionError, TimeoutError)):\n    \"\"\"Call fn, retrying transient errors with capped exponential backoff and jitter.\"\"\"\n    if attempts < 1:\n        raise ValueError(\"attempts must be >= 1\")\n    for attempt in range(1, attempts + 1):\n        try:\n            return fn()\n        except retry_on:\n            if attempt == attempts:\n                raise\n            delay = min(max_delay, base_delay * 2 ** (attempt - 1))\n            time.sleep(delay * random.uniform(0.5, 1.0))\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.tmp
+
+# Personal practice history stays local
+data/submissions/
+data/feedback/
+
+# Personal status notes
+STATUS.md

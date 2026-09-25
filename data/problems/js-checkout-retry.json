@@ -1,0 +1,27 @@
+{
+  "id": "js-checkout-retry",
+  "title": "checkout: retry card charges",
+  "language": "javascript",
+  "format": "multi",
+  "difficulty": "hard",
+  "spec": {
+    "id": "PAY-51",
+    "text": "Retry card charges on gateway timeouts so a network blip does not fail checkout. A customer must never be charged twice for one cart. Card declines must fail immediately."
+  },
+  "context": "Express handler. gateway is the payment provider's SDK; charges.create accepts an optional idempotencyKey. Prices are stored as decimal dollars.",
+  "files": [
+    {
+      "path": "api/checkout.js",
+      "content": "import { chargeCard } from \"../lib/payments.js\";\nimport { db } from \"../lib/db.js\";\n\nexport async function checkout(req, res) {\n  const { cartId, paymentMethodId } = req.body;\n  const cart = await db.carts.findById(cartId);\n  if (!cart) return res.status(404).json({ error: \"cart not found\" });\n\n  const total = cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);\n  const charge = await chargeCard({ amount: total, paymentMethodId });\n\n  await db.orders.insert({ cartId, chargeId: charge.id, total, status: \"paid\" });\n  await db.carts.delete(cartId);\n  return res.json({ ok: true, chargeId: charge.id });\n}\n"
+    },
+    {
+      "path": "lib/payments.js",
+      "content": "import { gateway } from \"./gateway.js\";\n\nconst MAX_ATTEMPTS = 3;\n\nexport async function chargeCard({ amount, paymentMethodId }) {\n  let lastError;\n  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {\n    try {\n      return await gateway.charges.create({\n        amount: Math.round(amount * 100),\n        currency: \"usd\",\n        payment_method: paymentMethodId,\n      });\n    } catch (err) {\n      lastError = err;\n    }\n  }\n  throw lastError;\n}\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}

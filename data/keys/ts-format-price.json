@@ -1,0 +1,17 @@
+{
+  "verdict": "nits",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/ui/formatPrice.ts",
+      "start": 2,
+      "end": 2,
+      "category": "performance",
+      "severity": "low",
+      "title": "Formatter built on every call",
+      "explanation": "Intl.NumberFormat is relatively expensive to construct and this runs up to 200 times per render. Correct output, small cost.",
+      "fix": "Cache one formatter per currency in a module-level Map."
+    }
+  ],
+  "problem_id": "ts-format-price"
+}

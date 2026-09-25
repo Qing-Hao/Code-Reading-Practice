@@ -1,0 +1,28 @@
+{
+  "id": "real-thefuck-php-s",
+  "title": "thefuck rule: php_s",
+  "language": "python",
+  "format": "function",
+  "difficulty": "easy",
+  "spec": {
+    "id": "PR #702",
+    "text": "New rule: when someone runs php with -s (lowercase) meaning the built-in web server flag -S, suggest the same command with -S."
+  },
+  "context": "thefuck rules: match() decides whether the rule applies; get_new_command() builds the corrected command. @for_app('php') only calls match() for commands whose program is php. requires_output = False lets the rule run without capturing the command's output.",
+  "files": [
+    {
+      "path": "thefuck/rules/php_s.py",
+      "content": "from thefuck.utils import replace_argument, for_app\n\n\n@for_app('php')\ndef match(command):\n    return \"php -s\" in command.script\n\n\ndef get_new_command(command):\n    return replace_argument(command.script, \"-s\", \"-S\")\n\n\nrequires_output = False\n"
+    }
+  ],
+  "source": {
+    "kind": "real",
+    "date": "2017-10-10",
+    "repo": "nvbn/thefuck",
+    "ref": "https://github.com/nvbn/thefuck/commit/75d2c43997ca703150cbdb4c46ed7b2e2e71fd11",
+    "sha": "64d6835",
+    "dataset": "BugsInPy (thefuck bug 7)",
+    "license": "MIT",
+    "notes": "Code at buggy commit 64d6835; key from fix commit 75d2c43, whose message says: 'Unfortunately, I didn't catch these issues while reviewing #702.'"
+  }
+}

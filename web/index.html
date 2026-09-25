@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review Drill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="1" y="2" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 7h5M4.5 10h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11.5 6.5l1.2 1.2 2.3-2.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Review Drill
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="practice">Practice</button>
+      <button role="tab" aria-selected="false" data-tab="history">History</button>
+      <button role="tab" aria-selected="false" data-tab="stats">Stats</button>
+    </nav>
+    <div class="top-right">
+      <span class="live" id="live">Offline</span>
+      <label class="setting" for="badge-mode">Show source
+        <select id="badge-mode">
+          <option value="after">after submit</option>
+          <option value="always">always</option>
+        </select>
+      </label>
+      <div class="timer stopped" id="timer"><span class="dot"></span><span id="clock">0:00</span><small id="target"></small></div>
+    </div>
+  </header>
+
+  <main class="practice" id="tab-practice">
+    <aside class="queue" id="queue"></aside>
+    <section class="work" id="work"><p class="placeholder">Loading problems…</p></section>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </main>
+
+  <section class="page" id="tab-history" hidden></section>
+  <section class="page" id="tab-stats" hidden></section>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

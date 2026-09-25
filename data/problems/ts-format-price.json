@@ -1,0 +1,23 @@
+{
+  "id": "ts-format-price",
+  "title": "formatPrice",
+  "language": "typescript",
+  "format": "function",
+  "difficulty": "easy",
+  "spec": {
+    "id": "SHOP-3",
+    "text": "Show product prices as SGD currency text on product cards, up to 200 cards per page. Prices are stored as integer cents."
+  },
+  "context": "Called once per product card while rendering the grid.",
+  "files": [
+    {
+      "path": "src/ui/formatPrice.ts",
+      "content": "export function formatPrice(cents: number, currency = \"SGD\"): string {\n  const formatter = new Intl.NumberFormat(\"en-SG\", { style: \"currency\", currency });\n  return formatter.format(cents / 100);\n}\n"
+    }
+  ],
+  "source": {
+    "kind": "generated",
+    "date": "2026-09-25",
+    "notes": "Seed problem written with Claude Code."
+  }
+}
