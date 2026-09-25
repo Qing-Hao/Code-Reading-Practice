@@ -1,0 +1,29 @@
+{
+  "id": "real-httpie-host-header",
+  "title": "HTTPie: printing request headers",
+  "language": "python",
+  "format": "function",
+  "difficulty": "medium",
+  "spec": {
+    "id": "--print=H",
+    "text": "With --print=H (or -v), HTTPie prints the request exactly as it is sent: the request line, then every header. Users can set any header on the command line, e.g. `http example.org Host:api.local X-Token:abc`; if no Host header was given, show the one derived from the URL."
+  },
+  "context": "HTTPRequest wraps a requests.PreparedRequest (self._orig). self._orig.headers is a requests.structures.CaseInsensitiveDict holding the default headers plus the user's headers. At send time, a Host header is added from the URL only when the request does not already carry one. urlsplit is urllib's; netloc may include user:password@.",
+  "files": [
+    {
+      "path": "httpie/models.py",
+      "content": "class HTTPRequest(HTTPMessage):\n    \"\"\"A :class:`requests.models.Request` wrapper.\"\"\"\n\n    def iter_body(self, chunk_size):\n        yield self.body\n\n    def iter_lines(self, chunk_size):\n        yield self.body, b''\n\n    @property\n    def headers(self):\n        url = urlsplit(self._orig.url)\n\n        request_line = '{method} {path}{query} HTTP/1.1'.format(\n            method=self._orig.method,\n            path=url.path or '/',\n            query='?' + url.query if url.query else ''\n        )\n\n        headers = dict(self._orig.headers)\n\n        if 'Host' not in headers:\n            headers['Host'] = url.netloc.split('@')[-1]\n\n        headers = ['%s: %s' % (name, value)\n                   for name, value in headers.items()]\n\n        headers.insert(0, request_line)\n        headers = '\\r\\n'.join(headers).strip()\n\n        if isinstance(headers, bytes):\n            # Python < 3\n            headers = headers.decode('utf8')\n        return headers\n",
+      "is_diff": false
+    }
+  ],
+  "source": {
+    "kind": "real",
+    "date": "2014-06-28",
+    "repo": "jakubroztocil/httpie",
+    "ref": "https://github.com/jakubroztocil/httpie/commit/040d981f00c3f6830b2d0db3daf3c64c080e96e3",
+    "sha": "8c892ed",
+    "dataset": "BugsInPy (httpie bug 4)",
+    "license": "BSD-3-Clause",
+    "notes": "Code at buggy commit 8c892ed (lines 85-118 of httpie/models.py); key from fix commit 040d981 ('Fixed custom Host', closes issue #235)."
+  }
+}

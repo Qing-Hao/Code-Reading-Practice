@@ -1,0 +1,29 @@
+{
+  "id": "real-axios-parse-headers",
+  "title": "axios helper: parseHeaders",
+  "language": "javascript",
+  "format": "function",
+  "difficulty": "medium",
+  "spec": {
+    "id": "axios parseHeaders",
+    "text": "Parse the raw response header block (one 'Name: value' per line) into an object keyed by lower-cased header name, matching Node's message.headers rules: for the listed singleton headers keep the first occurrence and discard later duplicates, always collect set-cookie into an array, and join other duplicates with ', '."
+  },
+  "context": "Used by the XHR adapter on xhr.getAllResponseHeaders(). utils.toObjectSet(arr) returns a plain object literal mapping each string to true. Header values may legitimately be empty strings (e.g. 'Content-Length:' or 'X-Foo:'). The result is later wrapped in AxiosHeaders and returned to user code as response.headers.",
+  "files": [
+    {
+      "path": "lib/helpers/parseHeaders.js",
+      "content": "'use strict';\n\nimport utils from '../utils.js';\n\n// RawAxiosHeaders whose duplicates are ignored by node\n// c.f. https://nodejs.org/api/http.html#http_message_headers\nconst ignoreDuplicateOf = utils.toObjectSet([\n  'age',\n  'authorization',\n  'content-length',\n  'content-type',\n  'etag',\n  'expires',\n  'from',\n  'host',\n  'if-modified-since',\n  'if-unmodified-since',\n  'last-modified',\n  'location',\n  'max-forwards',\n  'proxy-authorization',\n  'referer',\n  'retry-after',\n  'user-agent',\n]);\n\n/**\n * Parse headers into an object\n *\n * ```\n * Date: Wed, 27 Aug 2014 08:58:49 GMT\n * Content-Type: application/json\n * Connection: keep-alive\n * Transfer-Encoding: chunked\n * ```\n *\n * @param {String} rawHeaders Headers needing to be parsed\n *\n * @returns {Object} Headers parsed into an object\n */\nexport default (rawHeaders) => {\n  const parsed = {};\n  let key;\n  let val;\n  let i;\n\n  rawHeaders &&\n    rawHeaders.split('\\n').forEach(function parser(line) {\n      i = line.indexOf(':');\n      key = line.substring(0, i).trim().toLowerCase();\n      val = line.substring(i + 1).trim();\n\n      if (!key || (parsed[key] && ignoreDuplicateOf[key])) {\n        return;\n      }\n\n      if (key === 'set-cookie') {\n        if (parsed[key]) {\n          parsed[key].push(val);\n        } else {\n          parsed[key] = [val];\n        }\n      } else {\n        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;\n      }\n    });\n\n  return parsed;\n};\n",
+      "is_diff": false
+    }
+  ],
+  "source": {
+    "kind": "real",
+    "date": "2026-06-29",
+    "repo": "axios/axios",
+    "ref": "https://github.com/axios/axios/commit/78b5187ee7b6b97e416caf4e116fe7c8d3c2c2ca",
+    "sha": "4106dda",
+    "dataset": "GitHub fix commit",
+    "license": "MIT",
+    "notes": "Whole lib/helpers/parseHeaders.js at parent commit 4106dda; key from fix commit 78b5187 'fix: preserve empty duplicate header values (#11036)', which replaced truthiness checks with own-property checks."
+  }
+}

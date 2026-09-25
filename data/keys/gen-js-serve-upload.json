@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-js-serve-upload",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/routes/files.js",
+      "start": 12,
+      "end": 13,
+      "category": "security",
+      "severity": "critical",
+      "title": "Path check allows reading other users' files",
+      "explanation": "The containment check is against UPLOAD_ROOT, not the user's own folder. Express decodes params, so a request for ..%2Fbob%2Ftax.pdf arrives as ../bob/tax.pdf, stays inside uploads/ and reads bob's file. The extra decodeURIComponent is a second decode on top of that. startsWith without a trailing separator also accepts sibling folders like uploads-old. A stray % in a filename makes decodeURIComponent throw a 500.",
+      "fix": "Drop the second decode, resolve against path.join(UPLOAD_ROOT, userId) and require the result to start with that folder plus path.sep."
+    },
+    {
+      "id": "k2",
+      "file": "src/routes/files.js",
+      "start": 17,
+      "end": 23,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Stream errors are unhandled",
+      "explanation": "existsSync is true for directories, and a file can vanish between the check and the read. createReadStream then emits an error with no listener, which crashes the process instead of returning 404.",
+      "fix": "Use fs.promises.stat to require a regular file, and handle the stream's error event (or use stream.pipeline)."
+    },
+    {
+      "id": "k3",
+      "file": "src/routes/files.js",
+      "start": 22,
+      "end": 22,
+      "category": "security",
+      "severity": "low",
+      "title": "Filename is not escaped in Content-Disposition",
+      "explanation": "A name containing a quote breaks the header value, and non-ASCII names are sent raw.",
+      "fix": "Use res.attachment(name) or encode with filename*=UTF-8''."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-js-signup-validate",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "routes/signup.js",
+      "start": 15,
+      "end": 15,
+      "category": "security",
+      "severity": "high",
+      "title": "Whole request body still goes to users.create",
+      "explanation": "Validation reads three fields but then passes req.body through, so a client can send role: \"admin\" or is_verified: true and have it stored.",
+      "fix": "Call users.create({ email, password, age }) with only the validated fields."
+    },
+    {
+      "id": "k2",
+      "file": "routes/signup.js",
+      "start": 11,
+      "end": 11,
+      "category": "spec",
+      "severity": "medium",
+      "title": "age is not checked to be an integer",
+      "explanation": "Missing age, \"abc\" or 13.5 all pass because undefined < 13 and NaN < 13 are false. USR-77 requires an integer of 13 or over.",
+      "fix": "Reject unless Number.isInteger(age) && age >= 13."
+    },
+    {
+      "id": "k3",
+      "file": "routes/signup.js",
+      "start": 8,
+      "end": 8,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Missing password throws instead of returning 400",
+      "explanation": "If password is absent or not a string, password.length throws a TypeError and the client gets a 500.",
+      "fix": "Check typeof password !== \"string\" || password.length < 12."
+    }
+  ]
+}

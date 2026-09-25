@@ -1,0 +1,17 @@
+{
+  "problem_id": "gen-ts-can-access",
+  "verdict": "ask",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/acl/canAccess.ts",
+      "start": 21,
+      "end": 25,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Spec does not say whether folder grants inherit",
+      "explanation": "The code walks up the tree and allows the action if any ancestor folder grants a high enough role. ACL-31 only says grants are stored per resource. Whether a folder grant applies to everything inside it, and whether a lower grant on a child can restrict it, is a product decision the reviewer cannot judge from the ticket.",
+      "fix": "Ask the ticket owner whether grants inherit down the tree and whether child grants can override; then keep or remove the ancestor walk."
+    }
+  ]
+}

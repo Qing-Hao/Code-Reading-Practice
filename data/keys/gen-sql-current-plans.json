@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-sql-current-plans",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "analytics/current_plans.sql",
+      "start": 11,
+      "end": 11,
+      "category": "spec",
+      "severity": "high",
+      "title": "Cancelled customers still appear",
+      "explanation": "Filtering out cancel rows before ranking means a cancelled customer's last non-cancel change becomes rn = 1, so they are reported as active on their old plan.",
+      "fix": "Rank all rows, then filter l.action <> 'cancel' in the outer query together with rn = 1."
+    },
+    {
+      "id": "k2",
+      "file": "analytics/current_plans.sql",
+      "start": 6,
+      "end": 8,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "RANK without id tie-break returns duplicates",
+      "explanation": "Rows with the same changed_at all get rank 1, so the customer comes out once per tied row, possibly with different plans. ANL-58 says the higher id wins.",
+      "fix": "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY changed_at DESC, id DESC)."
+    },
+    {
+      "id": "k3",
+      "file": "analytics/current_plans.sql",
+      "start": 16,
+      "end": 18,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Window SUM keeps one row per payment",
+      "explanation": "SUM() OVER (PARTITION BY ...) does not collapse rows. paid has one row per payment, so the LEFT JOIN repeats each customer once per succeeded payment.",
+      "fix": "Use SUM(p.amount_cents) with GROUP BY p.customer_id."
+    }
+  ]
+}

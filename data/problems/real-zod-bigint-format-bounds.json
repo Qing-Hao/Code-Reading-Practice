@@ -1,0 +1,29 @@
+{
+  "id": "real-zod-bigint-format-bounds",
+  "title": "zod core: bigint format check",
+  "language": "typescript",
+  "format": "function",
+  "difficulty": "hard",
+  "spec": {
+    "id": "zod v4 checks",
+    "text": "z.int64() / z.uint64() are bigint format checks: reject values outside the format's range, and record the format and range in the schema's bag so introspection (minValue / maxValue getters, toJSONSchema) reports the schema's effective constraints. Format checks compose with .min() / .max() / .check() like any other check."
+  },
+  "context": "Excerpt of packages/zod/src/v4/core/checks.ts (two checks shown; $ZodCheckGreaterThan is what .min()/.gte()/.positive() create). Every check pushes an onattach hook; when a check is added to a schema, its hooks run in the order the checks were chained and write into the schema's shared inst._zod.bag. The bigint schema's minValue / maxValue getters read bag.minimum / bag.maximum directly, and toJSONSchema reads the same bag. util.BIGINT_FORMAT_RANGES maps int64/uint64 to [min, max] bigint tuples.",
+  "files": [
+    {
+      "path": "packages/zod/src/v4/core/checks.ts",
+      "content": "export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@__PURE__*/ core.$constructor(\n  \"$ZodCheckGreaterThan\",\n  (inst, def) => {\n    $ZodCheck.init(inst, def);\n    const origin = numericOriginMap[typeof def.value as \"number\" | \"bigint\" | \"object\"];\n\n    inst._zod.onattach.push((inst) => {\n      const bag = inst._zod.bag;\n      const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;\n      if (def.value > curr) {\n        if (def.inclusive) bag.minimum = def.value;\n        else bag.exclusiveMinimum = def.value;\n      }\n    });\n\n    inst._zod.check = (payload) => {\n      if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {\n        return;\n      }\n\n      payload.issues.push({\n        origin: numericOriginMap[typeof payload.value as \"number\" | \"bigint\" | \"object\"] ?? origin,\n        code: \"too_small\",\n        minimum: typeof def.value === \"object\" ? def.value.getTime() : def.value,\n        input: payload.value,\n        inclusive: def.inclusive,\n        inst,\n        continue: !def.abort,\n      });\n    };\n  }\n);\n\nexport const $ZodCheckBigIntFormat: core.$constructor<$ZodCheckBigIntFormat> = /*@__PURE__*/ core.$constructor(\n  \"$ZodCheckBigIntFormat\",\n  (inst, def) => {\n    $ZodCheck.init(inst, def); // no format checks\n\n    const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format];\n\n    inst._zod.onattach.push((inst) => {\n      const bag = inst._zod.bag;\n      bag.format = def.format;\n      bag.minimum = minimum;\n      bag.maximum = maximum;\n    });\n\n    inst._zod.check = (payload) => {\n      const input = payload.value;\n\n      if (input < minimum) {\n        payload.issues.push({\n          origin: \"bigint\",\n          input,\n          code: \"too_small\",\n          minimum: minimum as any,\n          inclusive: true,\n          inst,\n          continue: !def.abort,\n        });\n      }\n\n      if (input > maximum) {\n        payload.issues.push({\n          origin: \"bigint\",\n          input,\n          code: \"too_big\",\n          maximum,\n          inclusive: true,\n          inst,\n          continue: !def.abort,\n        } as any);\n      }\n    };\n  }\n);\n",
+      "is_diff": false
+    }
+  ],
+  "source": {
+    "kind": "real",
+    "date": "2026-09-02",
+    "repo": "colinhacks/zod",
+    "ref": "https://github.com/colinhacks/zod/commit/7a00236683c79000dbab0d92f6faf0b7fba39f59",
+    "sha": "5489a53",
+    "dataset": "GitHub fix commit",
+    "license": "MIT",
+    "notes": "Verbatim excerpts ($ZodCheckGreaterThan, $ZodCheckBigIntFormat) of checks.ts at parent commit 5489a53; key from fix commit 7a00236 (#6553, fixes #6550), which also fixed the same pattern in $ZodCheckNumberFormat (not shown)."
+  }
+}

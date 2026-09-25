@@ -1,0 +1,28 @@
+{
+  "problem_id": "real-luigi-tuple-parameter",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "luigi/parameter.py",
+      "start": 52,
+      "end": 52,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Flat tuple JSON raises uncaught TypeError",
+      "explanation": "For a flat tuple, serialize() gives '[1, 2, 3]'; json.loads succeeds and tuple(x) is called on each int, raising TypeError, which the except ValueError does not catch. Round-tripping any flat TupleParameter fails, e.g. when a worker reloads a dynamic dependency (issue #2609).",
+      "fix": "except (ValueError, TypeError):"
+    },
+    {
+      "id": "k2",
+      "file": "luigi/parameter.py",
+      "start": 53,
+      "end": 53,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Fallback does not guarantee a tuple",
+      "explanation": "literal_eval returns whatever the literal is, so once the JSON path falls through (e.g. '[1, 2, 3]'), parse returns a list rather than a tuple.",
+      "fix": "return tuple(literal_eval(x))"
+    }
+  ]
+}

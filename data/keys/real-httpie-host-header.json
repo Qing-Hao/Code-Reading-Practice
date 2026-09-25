@@ -1,0 +1,17 @@
+{
+  "problem_id": "real-httpie-host-header",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "httpie/models.py",
+      "start": 20,
+      "end": 22,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Host check is case-sensitive after dict() copy",
+      "explanation": "dict(self._orig.headers) drops the case-insensitive lookup, so a user header typed as `host:` is not seen by `'Host' not in headers` and a second Host line is added. The printed request then shows two Host headers while only the user's one is sent (issue #235).",
+      "fix": "Check the original CaseInsensitiveDict: if 'Host' not in self._orig.headers: headers['Host'] = ..."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "problem_id": "real-zod-bigint-format-bounds",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "packages/zod/src/v4/core/checks.ts",
+      "start": 44,
+      "end": 45,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Format check overwrites tighter min/max already in the bag",
+      "explanation": "onattach hooks run in chain order on a shared bag. The range checks only narrow the bag, but this hook assigns the format's full range unconditionally, so z.bigint().min(0n).max(23n).check(z.int64()) reports minValue/maxValue (and JSON Schema bounds) as the whole int64 range although parsing still enforces 0..23. The result depends on chaining order. The same bug existed in $ZodCheckNumberFormat (.int() after .min()/.max()).",
+      "fix": "const curMin = bag.minimum ?? Number.NEGATIVE_INFINITY; if (minimum > curMin) bag.minimum = minimum; const curMax = bag.maximum ?? Number.POSITIVE_INFINITY; if (maximum < curMax) bag.maximum = maximum;"
+    }
+  ]
+}

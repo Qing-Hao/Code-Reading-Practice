@@ -1,0 +1,17 @@
+{
+  "problem_id": "real-pysnooper-file-output",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "pysnooper/pysnooper.py",
+      "start": 8,
+      "end": 8,
+      "category": "correctness",
+      "severity": "high",
+      "title": "File output opens undefined name output_path",
+      "explanation": "No variable output_path exists in this scope, so the first traced line raises NameError whenever snoop() is given a file path. File logging, a documented feature, never works.",
+      "fix": "with open(output, 'a') as output_file:"
+    }
+  ]
+}

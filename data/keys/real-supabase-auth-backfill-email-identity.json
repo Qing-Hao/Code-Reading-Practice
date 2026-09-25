@@ -1,0 +1,39 @@
+{
+  "problem_id": "real-supabase-auth-backfill-email-identity",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "migrations/20221125140132_backfill_email_identity.up.sql",
+      "start": 5,
+      "end": 5,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Backfilled identities get last_sign_in_at = null",
+      "explanation": "The column allows null, but the client SDK types require last_sign_in_at, so every backfilled identity crashed strongly typed clients (Flutter). Fixed by follow-up migration 20221208132122 (PR #850), which set it to '2022-11-25' on these rows.",
+      "fix": "Insert a non-null value, e.g. '2022-11-25' as last_sign_in_at (matching created_at)."
+    },
+    {
+      "id": "k2",
+      "file": "migrations/20221125140132_backfill_email_identity.up.sql",
+      "start": 7,
+      "end": 7,
+      "category": "spec",
+      "severity": "medium",
+      "title": "encrypted_password != '' skips passwordless and invited users",
+      "explanation": "The spec covers email-passwordless users too, but those (and invited users who have not set a password) have encrypted_password = '', so they get no email identity. A later migration (PR #914) had to backfill invited users separately with invited_at is not null.",
+      "fix": "Select on email is not null (plus invited_at / confirmed users as intended) instead of requiring a non-empty password."
+    },
+    {
+      "id": "k3",
+      "file": "migrations/20221125140132_backfill_email_identity.up.sql",
+      "start": 7,
+      "end": 7,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "not exists matches identities of any provider",
+      "explanation": "The subquery does not filter on provider, so a user who already has e.g. a google identity is treated as having an email identity and is skipped. The follow-up backfill (PR #914) correlates on provider = 'email'.",
+      "fix": "not exists (select 1 from auth.identities where user_id = users.id and provider = 'email')"
+    }
+  ]
+}

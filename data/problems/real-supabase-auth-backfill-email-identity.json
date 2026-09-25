@@ -1,0 +1,29 @@
+{
+  "id": "real-supabase-auth-backfill-email-identity",
+  "title": "supabase auth migration: backfill email identities",
+  "language": "sql",
+  "format": "diff",
+  "difficulty": "medium",
+  "spec": {
+    "id": "PR #823",
+    "text": "Add a migration that backfills auth.identities for all email-password or email-passwordless (magic link / OTP) users that don't have a corresponding email identity. created_at / updated_at are deliberately hard-coded so the migration can be rolled back by deleting those rows."
+  },
+  "context": "Postgres, Supabase Auth (GoTrue). New migration, run once per project on upgrade. auth.users.encrypted_password is '' (not null) for users who never set a password: passwordless sign-ins and invited users who haven't accepted yet. A user can already have identities from other providers (google, github, ...). auth.identities: id text, user_id uuid, identity_data jsonb, provider text, last_sign_in_at timestamptz nullable, created_at, updated_at. Client SDKs (gotrue-js and typed ports built from it, e.g. Flutter) declare UserIdentity.last_sign_in_at as a required string.",
+  "files": [
+    {
+      "path": "migrations/20221125140132_backfill_email_identity.up.sql",
+      "content": "+-- backfill the auth.identities column by adding an email identity \n+-- for all auth.users with an email and password \n+\n+insert into auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)\n+select id, id as user_id, jsonb_build_object('sub', id, 'email', email) as identity_data, 'email' as provider, null as last_sign_in_at, '2022-11-25' as created_at, '2022-11-25' as updated_at\n+from auth.users as users\n+where encrypted_password != '' and email is not null and not exists(select user_id from auth.identities where user_id = users.id);\n",
+      "is_diff": true
+    }
+  ],
+  "source": {
+    "kind": "real",
+    "date": "2022-12-08",
+    "repo": "supabase/auth",
+    "ref": "https://github.com/supabase/auth/commit/ef1a51ffa0c16853b8c7752b29a16ad05cf56126",
+    "sha": "b54d60a",
+    "dataset": "GitHub fix commit",
+    "license": "MIT",
+    "notes": "Diff of commit b54d60a (PR #823) that introduced the migration. Key from follow-up fix migrations: ef1a51f (PR #850, last_sign_in_at left null crashed typed clients) and f7286dd (PR #914, backfill for invited users, matching existing identities on provider = 'email')."
+  }
+}

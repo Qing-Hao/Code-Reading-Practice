@@ -1,0 +1,39 @@
+{
+  "problem_id": "real-axios-parse-headers",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 53,
+      "end": 53,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Empty first value of a singleton header counts as absent",
+      "explanation": "parsed[key] is a truthiness check, so 'Content-Length:' followed by 'Content-Length: 10' does not trigger the keep-first rule; the duplicate falls through and replaces the empty first value, unlike Node.",
+      "fix": "const hasKey = utils.hasOwnProp(parsed, key); if (!key || (hasKey && utils.hasOwnProp(ignoreDuplicateOf, key))) return;"
+    },
+    {
+      "id": "k2",
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 64,
+      "end": 64,
+      "category": "correctness",
+      "severity": "low",
+      "title": "Empty first value dropped when joining duplicates",
+      "explanation": "Same truthiness test when merging: 'X-Foo:' then 'X-Foo: a' yields 'a' instead of ', a', losing the first (empty) occurrence.",
+      "fix": "parsed[key] = hasKey ? parsed[key] + ', ' + val : val;"
+    },
+    {
+      "id": "k3",
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 53,
+      "end": 53,
+      "category": "correctness",
+      "severity": "low",
+      "title": "Inherited Object.prototype keys look like existing headers",
+      "explanation": "parsed and ignoreDuplicateOf are plain objects, so lookups see inherited properties: a header named constructor or toString is dropped on its first occurrence, and a polluted Object.prototype changes which headers are kept or merged. The fix switched every presence check (lines 53, 58, 64) to own-property checks.",
+      "fix": "Use utils.hasOwnProp(parsed, key) / utils.hasOwnProp(ignoreDuplicateOf, key) instead of property reads."
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "problem_id": "gen-ts-use-poll",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/hooks/usePoll.ts",
+      "start": 28,
+      "end": 28,
+      "category": "spec",
+      "severity": "high",
+      "title": "Changing intervalMs no longer restarts polling",
+      "explanation": "With an empty dependency array the effect runs once, so a new intervalMs is ignored for the life of the component. FE-212 requires a restart.",
+      "fix": "Depend on [intervalMs]."
+    },
+    {
+      "id": "k2",
+      "file": "src/hooks/usePoll.ts",
+      "start": 25,
+      "end": 28,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Polls with the first render's fetcher forever",
+      "explanation": "run closes over the fetcher from the first render. When filter changes, the widget keeps polling the old query. Dropping fetcher from deps fixed the restart-every-render problem the wrong way.",
+      "fix": "Keep the latest fetcher in a ref updated each render and call fetcherRef.current() inside run."
+    },
+    {
+      "id": "k3",
+      "file": "src/hooks/usePoll.ts",
+      "start": 27,
+      "end": 27,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Cleanup no longer sets cancelled",
+      "explanation": "cancelled is never set to true, so a response that lands after unmount still calls setData. The guard on line 13 is now dead code.",
+      "fix": "Return () => { cancelled = true; clearInterval(id); }."
+    },
+    {
+      "id": "k4",
+      "file": "src/hooks/usePoll.ts",
+      "start": 16,
+      "end": 16,
+      "category": "correctness",
+      "severity": "low",
+      "title": "Error path lost its cancelled guard",
+      "explanation": "setError now runs even after unmount, unlike the success path.",
+      "fix": "Restore if (!cancelled) before setError."
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "problem_id": "gen-py-job-worker",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "jobs/queue.py",
+      "start": 11,
+      "end": 15,
+      "category": "correctness",
+      "severity": "critical",
+      "title": "Claim is not atomic across workers",
+      "explanation": "A plain SELECT followed by UPDATE lets two workers read the same queued row before either commits, so both run the job. Nothing locks the row or re-checks its status in the UPDATE.",
+      "fix": "SELECT ... FOR UPDATE SKIP LOCKED in the same transaction as the UPDATE, or a single UPDATE ... WHERE id = (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING."
+    },
+    {
+      "id": "k2",
+      "file": "jobs/queue.py",
+      "start": 38,
+      "end": 38,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Job gets one attempt too many",
+      "explanation": "attempts counts finished tries. After the 5th failure attempts == 5, which is not > 5, so the job is queued a 6th time. JOBS-77 says MAX_ATTEMPTS attempts in total.",
+      "fix": "Use attempts >= MAX_ATTEMPTS."
+    },
+    {
+      "id": "k3",
+      "file": "jobs/worker.py",
+      "start": 18,
+      "end": 22,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Success is re-run when complete() fails",
+      "explanation": "complete() sits inside the same try as the handler. If the handler sent the email and the UPDATE or commit then fails, the except path calls fail() and requeues a job that already succeeded. The connection is also left in an aborted transaction with no rollback, so fail() itself raises and kills the worker.",
+      "fix": "Run only the handler inside the try; call db.rollback() before fail(); handle complete() errors separately."
+    },
+    {
+      "id": "k4",
+      "file": "jobs/worker.py",
+      "start": 16,
+      "end": 16,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Unknown job kind crashes the worker loop",
+      "explanation": "HANDLERS[...] is outside the try. A kind the worker does not know yet raises KeyError, the process dies and the job stays 'running'. After the visibility timeout another worker claims it and dies too; reclaiming does not bump attempts, so it never reaches 'dead'.",
+      "fix": "Look up the handler inside the try (or fail the job explicitly) and count reclaims as attempts."
+    },
+    {
+      "id": "k5",
+      "file": "jobs/handlers.py",
+      "start": 5,
+      "end": 11,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Invoice email handler is not idempotent",
+      "explanation": "The queue is at-least-once: a crash or failure after send() but before complete() retries the job. The handler never checks emailed_at and passes no idempotency_key, so the customer gets the email again.",
+      "fix": "Return early if invoice.emailed_at is set and pass idempotency_key=f\"invoice-{invoice.id}\" to send()."
+    }
+  ]
+}

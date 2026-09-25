@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-sql-weekly-signups",
+  "verdict": "nits",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "reports/weekly_signups.sql",
+      "start": 6,
+      "end": 6,
+      "category": "performance",
+      "severity": "low",
+      "title": "Unused join to user_profiles",
+      "explanation": "No column from p is selected or filtered on. Being one-to-one it does not change the counts, but it is extra work and makes readers wonder whether rows fan out.",
+      "fix": "Drop the join."
+    },
+    {
+      "id": "k2",
+      "file": "reports/weekly_signups.sql",
+      "start": 4,
+      "end": 4,
+      "category": "performance",
+      "severity": "low",
+      "title": "COUNT(DISTINCT) on a primary key",
+      "explanation": "u.id is unique and nothing fans out, so DISTINCT only adds a sort per group.",
+      "fix": "Use COUNT(*)."
+    },
+    {
+      "id": "k3",
+      "file": "reports/weekly_signups.sql",
+      "start": 9,
+      "end": 10,
+      "category": "design",
+      "severity": "low",
+      "title": "Ordinal GROUP BY / ORDER BY",
+      "explanation": "Positional references silently change meaning if someone reorders or adds a column in the SELECT list.",
+      "fix": "Group and order by the expressions or aliases (week_start, channel, signups)."
+    }
+  ]
+}

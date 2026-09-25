@@ -1,0 +1,50 @@
+{
+  "problem_id": "gen-sql-order-items-fk",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "migrations/0117_order_items_fk.sql",
+      "start": 3,
+      "end": 4,
+      "category": "correctness",
+      "severity": "critical",
+      "title": "Orphan cleanup also deletes gift-card rows",
+      "explanation": "For a NULL order_id the subquery finds no order, so NOT EXISTS is true and every gift-card top-up is deleted. The foreign key itself allows NULLs; only the cleanup is wrong.",
+      "fix": "Add AND oi.order_id IS NOT NULL to the DELETE."
+    },
+    {
+      "id": "k2",
+      "file": "migrations/0117_order_items_fk.sql",
+      "start": 8,
+      "end": 8,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Missing ON DELETE CASCADE",
+      "explanation": "DB-310 asks for deleting an order to delete its items. The default is NO ACTION, so deleting an order that has items now fails instead.",
+      "fix": "REFERENCES orders (id) ON DELETE CASCADE."
+    },
+    {
+      "id": "k3",
+      "file": "migrations/0117_order_items_fk.sql",
+      "start": 11,
+      "end": 12,
+      "category": "performance",
+      "severity": "high",
+      "title": "VALIDATE runs in the same transaction as ADD",
+      "explanation": "NOT VALID only helps if validation happens later. Here the SHARE ROW EXCLUSIVE locks taken by ADD CONSTRAINT on order_items and orders are held until commit, i.e. through the full 120M-row validation scan (and the orphan DELETE before it), blocking writes far longer than a few seconds.",
+      "fix": "Commit the NOT VALID constraint in one migration and run VALIDATE CONSTRAINT in a separate one."
+    },
+    {
+      "id": "k4",
+      "file": "migrations/0117_order_items_fk.sql",
+      "start": 6,
+      "end": 9,
+      "category": "performance",
+      "severity": "medium",
+      "title": "No index on order_items.order_id",
+      "explanation": "Postgres does not index the referencing column. With ON DELETE CASCADE every order delete scans the 120M-row order_items table to find children.",
+      "fix": "First add CREATE INDEX CONCURRENTLY ON order_items (order_id) in its own non-transactional migration."
+    }
+  ]
+}

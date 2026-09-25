@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-js-price-cache",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/catalog/prices.js",
+      "start": 13,
+      "end": 14,
+      "category": "spec",
+      "severity": "high",
+      "title": "Rejected lookups stay cached for 60 seconds",
+      "explanation": "The promise is cached before it settles and nothing removes it on failure. One pricing timeout makes every request for that SKU fail for a full minute, which CAT-58 forbids.",
+      "fix": "Attach promise.catch(() => cache.delete(sku)) (only if the entry is still this promise) before returning."
+    },
+    {
+      "id": "k2",
+      "file": "src/catalog/prices.js",
+      "start": 19,
+      "end": 25,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Result order and length no longer match the input",
+      "explanation": "Object.values orders integer-like keys numerically, so numeric SKUs come back sorted, not in input order, and a duplicated SKU collapses to one entry. Callers zip by index and will show the wrong price on the wrong item.",
+      "fix": "Keep the old shape: return Promise.all(skus.map(lookupCached))."
+    },
+    {
+      "id": "k3",
+      "file": "src/catalog/prices.js",
+      "start": 14,
+      "end": 14,
+      "category": "performance",
+      "severity": "low",
+      "title": "Expired entries are never evicted",
+      "explanation": "Entries are only replaced when the same SKU is asked for again, so the map grows with every SKU ever priced.",
+      "fix": "Delete expired entries on read, or use a bounded LRU/TTL cache."
+    }
+  ]
+}

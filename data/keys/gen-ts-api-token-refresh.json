@@ -1,0 +1,50 @@
+{
+  "problem_id": "gen-ts-api-token-refresh",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "src/api/tokenStore.ts",
+      "start": 15,
+      "end": 27,
+      "category": "correctness",
+      "severity": "critical",
+      "title": "In-flight refresh promise is never cleared",
+      "explanation": "refreshing is set once and never reset. The first refresh works; 15 minutes later every 401 gets the same settled promise with the old token, so refresh never happens again. A failed refresh stays cached as a rejection forever, even after the user logs in.",
+      "fix": "Clear it when settled: refreshing = (...)().finally(() => { refreshing = null; })."
+    },
+    {
+      "id": "k2",
+      "file": "src/api/client.ts",
+      "start": 18,
+      "end": 18,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Replay recurses without a retry limit",
+      "explanation": "The replay goes back through apiFetch, so a second 401 triggers another refresh and another replay. Combined with the cached promise this is an unbounded request loop. API-140 says refresh once.",
+      "fix": "Replay with send() directly (or pass a retried flag) and throw ApiError if the replay is still 401."
+    },
+    {
+      "id": "k3",
+      "file": "src/api/client.ts",
+      "start": 14,
+      "end": 17,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Refresh failure falls through to the replay",
+      "explanation": "After clearing tokens and calling location.assign, the catch does not return or throw, so the code replays the request with a null token and loops until navigation happens.",
+      "fix": "Throw an ApiError(401) after redirecting."
+    },
+    {
+      "id": "k4",
+      "file": "src/api/client.ts",
+      "start": 27,
+      "end": 30,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Spreading init.headers drops Headers instances",
+      "explanation": "Object spread of a Headers object copies nothing, so callers' headers such as Content-Type are silently lost. Arrays of tuples break too.",
+      "fix": "Build new Headers(init.headers) and call headers.set('Authorization', ...)."
+    }
+  ]
+}

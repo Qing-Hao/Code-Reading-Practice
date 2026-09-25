@@ -1,0 +1,39 @@
+{
+  "problem_id": "gen-py-csv-parse",
+  "verdict": "changes",
+  "issues": [
+    {
+      "id": "k1",
+      "file": "events/attendees.py",
+      "start": 9,
+      "end": 9,
+      "category": "correctness",
+      "severity": "high",
+      "title": "Naive comma split breaks quoted fields",
+      "explanation": "line.split(',') ignores CSV quoting. A name like \"Tan, Wei Ming\" shifts every column right, so the email lands under the wrong key and the row is reported as missing an email or stored with the wrong fields. The header line has the same problem.",
+      "fix": "Use csv.DictReader(io.StringIO(text)) and normalise the header keys."
+    },
+    {
+      "id": "k2",
+      "file": "events/attendees.py",
+      "start": 6,
+      "end": 6,
+      "category": "spec",
+      "severity": "medium",
+      "title": "Error line numbers are off by one",
+      "explanation": "enumerate(lines[1:], start=1) numbers the first data row as 1, but it is line 2 in the file. Every error message points the organiser at the row above the bad one.",
+      "fix": "Use start=2 (or reader.line_num with csv)."
+    },
+    {
+      "id": "k3",
+      "file": "events/attendees.py",
+      "start": 5,
+      "end": 5,
+      "category": "correctness",
+      "severity": "medium",
+      "title": "Empty upload raises IndexError",
+      "explanation": "For an empty string splitlines() returns [], so lines[0] raises instead of returning ([], []) as EVT-212 requires.",
+      "fix": "Return ([], []) early when there are no lines."
+    }
+  ]
+}
