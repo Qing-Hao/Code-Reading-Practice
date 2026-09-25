@@ -189,7 +189,7 @@ h1 { font: 600 22px/1.2 var(--mono); margin: 0; text-wrap: balance; }
 
 .page { display: grid; gap: 16px; max-width: 1100px; width: 100%; align-content: start; }
 .page h2 { font: 600 20px var(--cond); margin: 0; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
 .card h3 { margin: 0; font: 600 14px var(--cond); }
 .card svg text { fill: var(--ink-2); font: 10px var(--mono); }
@@ -209,8 +209,39 @@ tbody tr:hover { background: var(--surface-2); }
   .practice { grid-template-columns: 210px minmax(0, 1fr); }
   .panel { grid-column: 1 / -1; position: static; }
 }
+/* Phone layout: queue is a drawer, the review panel a bottom sheet, both opened from .mbar. */
+.scrim, .mbar, .sheet-close { display: none; }
 @media (max-width: 760px) {
   .practice { grid-template-columns: minmax(0, 1fr); }
   .thread, .composer, .keynote { margin-left: 16px; }
-  .top-right { margin-left: 0; }
+  .top { gap: 10px 14px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .top-right { margin-left: 0; gap: 10px; }
+  h1 { font-size: 18px; }
+  .app { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+  .queue, .panel { position: fixed; z-index: 30; background: var(--surface); overflow-y: auto; overscroll-behavior: contain; transition: transform .2s ease; }
+  .queue { inset: 0 auto 0 0; width: min(320px, 86vw); padding: max(12px, env(safe-area-inset-top)) 12px 16px; border-right: 1px solid var(--line); transform: translateX(-105%); }
+  .panel { inset: auto 0 0 0; top: auto; max-height: 85dvh; border-radius: 14px 14px 0 0; border-width: 1px 0 0; padding-bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateY(105%); }
+  body.queue-open .queue, body.panel-open .panel { transform: none; }
+  body.queue-open, body.panel-open { overflow: hidden; }
+  .scrim { position: fixed; inset: 0; z-index: 25; background: rgb(0 0 0 / .4); }
+  body.queue-open .scrim, body.panel-open .scrim { display: block; }
+  .sheet-close { display: block; align-self: flex-end; border: 0; background: transparent; color: var(--ink-2); font-size: 13px; padding: 4px 2px; }
+
+  .mbar { position: fixed; inset: auto 0 0 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
+  .mbar[hidden] { display: none; }
+  .mbar-status { flex: 1; min-width: 0; font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mbar-status b { color: var(--ink); font-weight: 600; }
+}
+@media (prefers-reduced-motion: reduce) { .queue, .panel { transition: none; } }
+
+/* Touch: bigger line targets, 16px inputs so iOS does not zoom on focus. */
+@media (pointer: coarse) {
+  .ln { min-width: 44px; line-height: 30px; }
+  .src { line-height: 30px; }
+  .ln:not(:disabled) { color: var(--accent); }
+  .composer textarea, .composer select, .setting select { font-size: 16px; }
+  .composer .kbd { display: none; }
+  .btn.small { padding: 8px 14px; font-size: 14px; }
+  .thread .del-btn { padding: 6px 4px; }
 }

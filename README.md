@@ -32,6 +32,10 @@ login, so keep it on your private tailnet and never expose it to the public inte
 4. To grade away from the PC, open Claude Code in this folder, start Remote Control (`/remote-control`),
    and run `/grade`, `/recap` and the other commands from the Claude app or claude.ai/code.
 
+On a phone, add the page to your home screen (Android Chrome: menu > Install app; iPhone Safari:
+Share > Add to Home Screen) to open it full screen like an app. It still needs the PC running;
+nothing works offline.
+
 Keep the PC awake while you are away (Settings > System > Power > Sleep: Never, when plugged in).
 Do not use `tailscale funnel`: it makes the app public.
 

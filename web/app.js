@@ -21,6 +21,7 @@ const CALIBRATION = {
   "medium-right": ["good", "Right at medium confidence."],
   "medium-wrong": ["bad", "Wrong at medium confidence."],
 };
+const TAP = matchMedia("(pointer: coarse)").matches ? "Tap" : "Click";
 const LANG_NAME = { python: "Python", sql: "SQL", typescript: "TypeScript", javascript: "JavaScript" };
 const FORMAT_NAME = { function: "Single function", diff: "Diff", multi: "Multi-file" };
 
@@ -110,6 +111,7 @@ async function openProblem(id, opts = {}) {
   }
   state.view = state.attempt ? "attempt" : "review";
   if (opts.retry) saveDraft();
+  setSheet(null);
   render();
 }
 
@@ -145,7 +147,7 @@ function queueItem(p) {
 function renderQueue() {
   const todo = state.problems.filter((p) => !p.latest || loadDraft(p.id) || (p.id === state.current && state.view === "review"));
   const done = state.problems.filter((p) => !todo.includes(p));
-  let html = '<div class="queue-head"><span class="label">To review</span><span class="hint">' + todo.length + "</span></div>";
+  let html = '<button class="sheet-close" data-sheet="">Close</button><div class="queue-head"><span class="label">To review</span><span class="hint">' + todo.length + "</span></div>";
   html += todo.length ? todo.map(queueItem).join("") : '<p class="empty">All reviewed.</p>';
   if (done.length) html += '<div class="queue-head"><span class="label">Reviewed</span><span class="hint">' + done.length + "</span></div>" + done.map(queueItem).join("");
   html += '<div class="gen-hint">Need more? In Claude Code run <code>/generate sql hard 3</code> or <code>/import-real 2</code>. New problems appear here on their own.</div>';
@@ -185,7 +187,7 @@ function renderWork() {
     '<div class="spec"><div class="spec-top"><span class="label">Spec</span><span class="spec-id">' + esc(p.spec.id) + "</span></div><p>" + esc(p.spec.text) + "</p></div>" +
     (p.context ? '<p class="context">' + esc(p.context) + "</p>" : "") + "</div>" +
     '<div class="code"><div class="code-bar"><div class="file-tabs" role="tablist">' + tabs + "</div><span>" +
-    (attempt ? "Review submitted" : "Click a line number to comment") + '</span></div><div class="code-scroll"><div class="rows">' + renderRows(p, attempt) + "</div></div></div>";
+    (attempt ? "Review submitted" : TAP + " a line number to comment") + '</span></div><div class="code-scroll"><div class="rows">' + renderRows(p, attempt) + "</div></div></div>";
   const ta = $("c-text");
   if (ta) ta.focus();
 }
@@ -259,10 +261,32 @@ function renderPanel() {
   const el = $("panel");
   const p = state.problem;
   $("timer").classList.toggle("stopped", state.view !== "review");
-  if (!p) { el.innerHTML = '<p class="empty">No problem open.</p>'; $("clock").textContent = "0:00"; $("target").textContent = ""; return; }
+  if (!p) { el.innerHTML = '<p class="empty">No problem open.</p>'; $("clock").textContent = "0:00"; $("target").textContent = ""; renderMbar(); return; }
   $("target").textContent = "/ " + fmt(p.target_seconds) + " target";
   if (state.view === "review") renderReviewPanel(el);
   else renderAttemptPanel(el);
+  el.insertAdjacentHTML("afterbegin", '<button class="sheet-close" data-sheet="">Close</button>');
+  renderMbar();
+}
+
+// Phone-only bottom bar; CSS hides it on wider screens.
+function renderMbar() {
+  let status = "", action = "";
+  if (state.problem && state.view === "review") {
+    const d = state.draft, n = d.comments.length;
+    status = "<b>" + n + " comment" + (n === 1 ? "" : "s") + "</b> · " + (d.verdict ? VERDICTS[d.verdict].label : "no verdict");
+    action = '<button class="btn primary" data-sheet="panel">Review</button>';
+  } else if (state.attempt) {
+    const r = state.attempt.result;
+    status = r.score == null ? "Submitted · waiting for /grade" : "Score <b>" + r.score + "</b> / 100";
+    action = '<button class="btn primary" data-sheet="panel">Results</button>';
+  }
+  $("mbar").innerHTML = '<button class="btn" data-sheet="queue">Problems</button><span class="mbar-status">' + status + "</span>" + action;
+}
+
+function setSheet(name) {
+  document.body.classList.toggle("queue-open", name === "queue");
+  document.body.classList.toggle("panel-open", name === "panel");
 }
 
 function renderReviewPanel(el) {
@@ -271,7 +295,7 @@ function renderReviewPanel(el) {
   const list = d.comments.length
     ? d.comments.map((c) => '<button class="c-item" data-jump="' + esc(c.file) + "|" + c.line + '"><span class="c-line">' + (state.problem.files.length > 1 ? esc(c.file.split("/").pop()) + ":" : "L") + c.line +
       '</span><span class="c-text">' + esc(c.text) + "</span></button>").join("")
-    : '<p class="empty">No comments yet. Click a line number to flag it.</p>';
+    : '<p class="empty">No comments yet. ' + TAP + " a line number to flag it.</p>";
   const ready = d.verdict && d.conf;
   el.innerHTML = "<h2>Your review</h2>" +
     '<div class="c-list"><span class="label">' + d.comments.length + " comment" + (d.comments.length === 1 ? "" : "s") + "</span>" + list + "</div>" +
@@ -391,6 +415,8 @@ function showTab(tab) {
   state.tab = tab;
   document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
   ["practice", "history", "stats"].forEach((id) => ($("tab-" + id).hidden = id !== tab));
+  $("mbar").hidden = tab !== "practice";
+  setSheet(null);
   if (tab === "history") renderHistory().catch(showError);
   if (tab === "stats") renderStats().catch(showError);
 }
@@ -443,8 +469,10 @@ function nextProblem() {
 }
 
 document.addEventListener("click", (e) => {
+  if (e.target.id === "scrim") return setSheet(null);
   const t = e.target.closest("button, tr[data-attempt]");
   if (!t) return;
+  if ("sheet" in t.dataset) return setSheet(t.dataset.sheet || null);
   if (t.dataset.tab) return showTab(t.dataset.tab);
   if (t.dataset.attempt) { showTab("practice"); openProblem(t.dataset.problem, { attemptId: t.dataset.attempt }).catch(showError); return; }
   if (t.dataset.open) { openProblem(t.dataset.open).catch(showError); return; }
@@ -455,6 +483,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.conf) { state.draft.conf = Number(t.dataset.conf); saveDraft(); renderPanel(); return; }
   if (t.dataset.jump) {
     const [file, line] = t.dataset.jump.split("|");
+    setSheet(null);
     if (state.file !== file) { state.file = file; renderWork(); }
     const btn = document.querySelector('.ln[data-line="' + line + '"]');
     if (btn) btn.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -473,6 +502,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.matches(".queue-open, .panel-open")) return setSheet(null);
   if (e.target.id !== "c-text") return;
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveComment(); }
   if (e.key === "Escape") { state.composer = null; renderWork(); }

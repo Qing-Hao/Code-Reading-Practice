@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2F5BD3">
   <title>Review Drill</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/static/style.css">
@@ -40,6 +43,9 @@
 
   <section class="page" id="tab-history" hidden></section>
   <section class="page" id="tab-stats" hidden></section>
+
+  <div class="scrim" id="scrim"></div>
+  <nav class="mbar" id="mbar" aria-label="Review actions"></nav>
 </div>
 <script src="/static/app.js"></script>
 </body>
