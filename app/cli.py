@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from app.models import AnswerKey, Feedback, Problem, Submission
 from app.scoring import score
+from app.stats import stats
 from app.store import Store
 
 
@@ -128,6 +129,11 @@ def cmd_validate(store: Store, args) -> int:
     return 1 if failed else 0
 
 
+def cmd_stats(store: Store, args) -> int:
+    print(json.dumps(stats(store), indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="Review Drill helpers")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -137,9 +143,10 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("attempt_id")
     v = sub.add_parser("validate", help="validate data files (all when no paths are given)")
     v.add_argument("paths", nargs="*")
+    sub.add_parser("stats", help="print miss rates and calibration as JSON")
     args = parser.parse_args(argv)
     store = Store()
-    return {"pending": cmd_pending, "show": cmd_show, "validate": cmd_validate}[args.cmd](store, args)
+    return {"pending": cmd_pending, "show": cmd_show, "validate": cmd_validate, "stats": cmd_stats}[args.cmd](store, args)
 
 
 if __name__ == "__main__":

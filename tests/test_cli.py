@@ -39,6 +39,13 @@ def test_show_latest_includes_feedback(attempt, store, capsys):
     assert '"summary": "nice"' in capsys.readouterr().out
 
 
+def test_stats_prints_json(attempt, store, capsys):
+    write_feedback(store, attempt.attempt_id, {"c1": 2, "c2": 0})
+    assert cli.main(["stats"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["graded"] == 1 and data["miss_rate_by_language"]["python"] == round(2 / 3, 3)
+
+
 def test_validate_all_ok(attempt, capsys):
     assert cli.main(["validate"]) == 0
     assert "FAIL" not in capsys.readouterr().out
