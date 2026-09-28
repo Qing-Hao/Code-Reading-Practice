@@ -21,6 +21,8 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+/* Stop mobile text autosizing from enlarging wide, unwrapped code over the chosen size. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
 button, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
