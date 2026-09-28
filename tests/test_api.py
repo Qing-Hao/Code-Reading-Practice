@@ -95,3 +95,20 @@ def test_serves_ui(client):
     assert "Review Drill" in client.get("/").text
     assert client.get("/static/app.js").status_code == 200
     assert client.get("/static/style.css").status_code == 200
+
+
+def test_css_disables_mobile_text_autosizing(client):
+    # Regression: on phones, turning wrap off let the browser enlarge the code past the chosen size.
+    css = client.get("/static/style.css").text
+    assert "-webkit-text-size-adjust: 100%" in css and "text-size-adjust: 100%" in css
+
+
+def test_manifest_is_installable(client):
+    assert '<link rel="manifest" href="/static/manifest.json">' in client.get("/").text
+    manifest = client.get("/static/manifest.json").json()
+    assert manifest["start_url"] == "/" and manifest["display"] == "standalone"
+    sizes = {i["sizes"] for i in manifest["icons"]}
+    assert {"192x192", "512x512"} <= sizes
+    for icon in manifest["icons"]:
+        res = client.get(icon["src"])
+        assert res.status_code == 200 and res.headers["content-type"] == "image/png"
