@@ -22,6 +22,8 @@ const CALIBRATION = {
   "medium-wrong": ["bad", "Wrong at medium confidence."],
 };
 const TAP = matchMedia("(pointer: coarse)").matches ? "Tap" : "Click";
+const PHONE = matchMedia("(max-width: 760px)").matches;
+const CODE_SIZE = { min: 11, max: 20, def: PHONE ? 12 : 13 };
 const LANG_NAME = { python: "Python", sql: "SQL", typescript: "TypeScript", javascript: "JavaScript" };
 const FORMAT_NAME = { function: "Single function", diff: "Diff", multi: "Multi-file" };
 
@@ -36,6 +38,8 @@ const state = {
   composer: null,
   tab: "practice",
   badgeMode: storageGet("rd-badge") || "after",
+  codeSize: Number(storageGet("rd-code-size")) || CODE_SIZE.def,
+  wrap: storageGet("rd-wrap") == null ? PHONE : storageGet("rd-wrap") === "1",
 };
 
 function storageGet(key) {
@@ -186,10 +190,36 @@ function renderWork() {
     "<h1>" + esc(p.title) + "</h1>" +
     '<div class="spec"><div class="spec-top"><span class="label">Spec</span><span class="spec-id">' + esc(p.spec.id) + "</span></div><p>" + esc(p.spec.text) + "</p></div>" +
     (p.context ? '<p class="context">' + esc(p.context) + "</p>" : "") + "</div>" +
-    '<div class="code"><div class="code-bar"><div class="file-tabs" role="tablist">' + tabs + "</div><span>" +
-    (attempt ? "Review submitted" : TAP + " a line number to comment") + '</span></div><div class="code-scroll"><div class="rows">' + renderRows(p, attempt) + "</div></div></div>";
+    '<div class="' + codeClass() + '" style="--code-size:' + state.codeSize + 'px"><div class="code-bar"><div class="file-tabs" role="tablist">' + tabs + '</div><div class="code-tools"><span class="code-hint">' +
+    (attempt ? "Review submitted" : TAP + " a line number to comment") + '</span><span id="code-view">' + codeViewControls() + '</span></div></div><div class="code-scroll"><div class="rows">' + renderRows(p, attempt) + "</div></div></div>";
   const ta = $("c-text");
   if (ta) ta.focus();
+}
+
+function codeClass() {
+  const file = state.problem.files.find((f) => f.path === state.file);
+  return "code" + (state.wrap ? " wrap" : "") + (file.is_diff ? " is-diff" : "");
+}
+
+function codeViewControls() {
+  const s = state.codeSize;
+  return '<span class="size" role="group" aria-label="Code font size">' +
+    '<button data-size="-1" aria-label="Smaller code"' + (s <= CODE_SIZE.min ? " disabled" : "") + ">A−</button>" +
+    '<button data-size="0" title="Reset to default">' + s + "px</button>" +
+    '<button data-size="1" aria-label="Larger code"' + (s >= CODE_SIZE.max ? " disabled" : "") + ">A+</button></span>" +
+    '<button class="toggle" data-wrap aria-pressed="' + state.wrap + '">Wrap</button>';
+}
+
+// Updates size and wrap in place so a half-typed comment survives, keeping the top visible line where it was.
+function applyCodeView() {
+  const code = document.querySelector(".code");
+  if (!code) return;
+  const anchor = [...code.querySelectorAll(".row")].find((r) => r.getBoundingClientRect().bottom > 0);
+  const before = anchor && anchor.getBoundingClientRect().top;
+  code.className = codeClass();
+  code.style.setProperty("--code-size", state.codeSize + "px");
+  $("code-view").innerHTML = codeViewControls();
+  if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top - before);
 }
 
 function renderRows(p, attempt) {
@@ -218,7 +248,7 @@ function renderRows(p, attempt) {
     if (row.kind === "-") cls += " del";
     const sign = file.is_diff ? '<span class="sign">' + (row.kind === " " ? "" : row.kind) + "</span>" : "";
     html += '<div class="row ' + cls + '"><button class="ln" data-line="' + n + '" aria-label="Comment on line ' + n + '"' + (attempt ? " disabled" : "") + ">" + n +
-      '</button><span class="mark"></span><pre class="src">' + sign + (hl(row.text, p.language) || " ") + "</pre></div>";
+      '</button><span class="mark"></span><pre class="src" style="--ind:' + indentWidth(row.text) + 'ch">' + sign + (hl(row.text, p.language) || " ") + "</pre></div>";
     (byLine[n] || []).forEach((i) => { html += renderThread(all[i], i, attempt, fbNotes); });
     if (!attempt && state.composer && state.composer.file === file.path && state.composer.line === n) html += renderComposer(n);
     issues.filter((k) => k.end === n && result.missed.includes(k.id)).forEach((k) => {
@@ -227,6 +257,12 @@ function renderRows(p, attempt) {
     });
   });
   return html;
+}
+
+// Leading whitespace in columns (tab = 4), used for the hanging indent of wrapped lines.
+function indentWidth(text) {
+  const lead = text.match(/^[ \t]*/)[0];
+  return lead.length + (lead.split("\t").length - 1) * 3;
 }
 
 function renderThread(c, i, attempt, fbNotes) {
@@ -473,6 +509,17 @@ document.addEventListener("click", (e) => {
   const t = e.target.closest("button, tr[data-attempt]");
   if (!t) return;
   if ("sheet" in t.dataset) return setSheet(t.dataset.sheet || null);
+  if (t.dataset.size) {
+    const step = Number(t.dataset.size);
+    state.codeSize = step ? Math.min(CODE_SIZE.max, Math.max(CODE_SIZE.min, state.codeSize + step)) : CODE_SIZE.def;
+    storageSet("rd-code-size", step ? String(state.codeSize) : null);
+    return applyCodeView();
+  }
+  if ("wrap" in t.dataset) {
+    state.wrap = !state.wrap;
+    storageSet("rd-wrap", state.wrap ? "1" : "0");
+    return applyCodeView();
+  }
   if (t.dataset.tab) return showTab(t.dataset.tab);
   if (t.dataset.attempt) { showTab("practice"); openProblem(t.dataset.problem, { attemptId: t.dataset.attempt }).catch(showError); return; }
   if (t.dataset.open) { openProblem(t.dataset.open).catch(showError); return; }
